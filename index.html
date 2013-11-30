@@ -4,11 +4,29 @@
 </head>
 <body>
 	<div id="infospace">Loading...</div>
-	<button id="evoscript-trigger">Start/Stop</button>
+	<button id="evoscript-trigger">Start/Pause</button>
+	<button id="evoscript-stop">Stop</button>
 	<div id="workspace">Your browser is not supported or js is not enabled.</div>
 	<script src="lib/jquery.js"></script>
 	<script src="src/functions.js"></script>
 	<script src="src/evoscript.js"></script>
 	<script src="src/test.js"></script>
+	<script>
+	$('#workspace').html('evoscript loaded');
+	$('#infospace').html(
+		'Press "Start" to get started, after defining your representation functions and fitness functions in functions.js'
+	);
+	var hatchery = new Hatchery();
+	$('#evoscript-trigger').click(function () {
+		if(!hatchery.running) {
+			hatchery.start();
+		} else {
+			hatchery.pause();
+		}
+	});
+	$('#evoscript-stop').click(function () {
+		hatchery.stop();
+	});
+	</script>
 </body>
 </html>

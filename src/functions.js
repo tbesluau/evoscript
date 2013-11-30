@@ -1,9 +1,19 @@
 // the base representation functions
 
-var es_fitness = function (result) {
-	return -1 * Math.abs(result - 278);
+// this is the fitness function, best way to use it is to
+// make it return a positive number closer to zero
+// as it gets better
+//
+// this function is passed a string to be evaluated
+// this is so that you can assign things to variables
+// from leaf functions before evaluating
+var es_fitness = function (representation) {
+	var result = eval(representation);
+	return Math.abs(result - 278.654321);
 };
 
+// those functions are your representation nodes
+// they will take results from their children as arguments
 var es_nodeFunctions = [
 
 	function es_add (x, y) {
@@ -30,6 +40,13 @@ var es_nodeFunctions = [
 	},
 ];
 
+// those functions are the leaf functions
+// they do not take arguments
+//
+// what they return will be evaluated in a string:
+// 1 --> number 1
+// 'abc' --> the abc variable, to be used in the evaluation function
+// '"abc"' --> the "abc" string
 var es_leafFunctions = [
 
 	function es_int () {
@@ -53,4 +70,25 @@ function getESNodeFunction () {
 
 function getESLeafFunction () {
 	return es_leafFunctions[Math.floor(Math.random()*es_leafFunctions.length)]();
+}
+
+// drawing function, feel free to use your own
+function draw (node, parentDOM) {
+	if(!parentDOM) {
+		$('#workspace').html('');
+		parentDOM = $('#workspace');
+	}
+	if(node.isLeaf) {
+		parentDOM.append(
+			'<div class="evoscript-node leaf-div"><span>' + node.method + '</span></div>'
+		);
+	} else {
+		var div = $(
+			'<div class="evoscript-node"><div class="node-div"><span>' + node.method.name + '</span></div></div>'
+		);
+		parentDOM.append(div);
+		$.each(node.children, function (index, child) {
+			draw(child, div);
+		});
+	}
 }

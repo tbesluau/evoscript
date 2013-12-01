@@ -7,9 +7,42 @@
 // this function is passed a string to be evaluated
 // this is so that you can assign things to variables
 // from leaf functions before evaluating
-var es_fitness = function (representation) {
+// or evaluate on a list
+var es_fitness = function (representation, useList) {
+
+	// a simple fitness evaluation (the individual algo returns something in itself)
+	// or a evaluation on a list (the individual algo runs for each set on the list
+	// and does something with the result, fitness is returned when the list is processed
+	if(useList) {
+		return fitness_list(representation);
+	} else {
+		return fitness_simple(representation);
+	}
+};
+
+var fitness_simple = function (representation) {
 	var result = eval(representation);
 	return Math.abs(result - 278.654321);
+};
+
+var fitness_list = function (representation) {
+	var total = 0;
+	var stored = null;
+	$.each(es_list, function (index, line) {
+		$.each(line, function (index, value) {
+			eval(es_headers[index]+ ' = ' + value);
+		});
+		var result = eval(representation);
+		// do something with this result here
+		// in this example, we compare it with the next
+		// value of the last header, so for headers A, B, C, D
+		// we use An, Bn, Cn, and Dn to predict Dn+1
+		if(stored !== null) {
+			total += Math.abs(stored - line[line.length - 1]);
+		}
+		stored = result;
+	});
+	return total;
 };
 
 // those functions are your representation nodes
@@ -51,7 +84,7 @@ var es_leafFunctions = [
 
 	function es_int () {
 		return Math.floor(Math.random()*10);
-	}
+	},
 
 ];
 

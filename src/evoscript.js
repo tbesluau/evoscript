@@ -69,7 +69,9 @@ function RepNode (method) {
 function Hatchery () {
 	
 	var self = this;
-
+	
+	// are we evolving on a list/csv file
+	this.useList = false;
 	// how many individuals are evolving in the hatchery
 	this.poolSize = 1000;
 	// what share of the population mutates each generation
@@ -114,7 +116,7 @@ function Hatchery () {
 	};
 
 	this.evalIndividual = function (individual) {
-		individual.fitness = es_fitness(individual.representation);
+		individual.fitness = es_fitness(individual.representation, self.useList);
 		return individual.fitness;
 	};
 

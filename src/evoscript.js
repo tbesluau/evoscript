@@ -244,8 +244,19 @@ function Hatchery () {
 			self.best = best;
 			draw(self.best);
 		}
-		$('#infospace').text(
-			'Gen ' + self.generation + ', Best individual: ' + self.best.fitness + ' (total: ' + self.getTotal() + ')'
+		$('#infospace').html(
+			'<table><tr>' +
+			'<th>Generation</th>' + 
+			'<th>Best Fitness</th>' + 
+			'<th>Total</th>' + 
+			'<th>Best Representation</th>' + 
+			'</tr><tr>' +
+			'<td><div>' + self.generation + '</div></td>' + 
+			'<td><div>' + self.best.fitness + '</div></td>' + 
+			'<td><div>' + self.getTotal() + '</div></td>' + 
+			'<td><button onclick="window.prompt(\'Best representation: \', \'' +
+			self.best.representation +'\');">See/Copy</button></td>' +
+			'</tr></table>'
 		);
 
 	};

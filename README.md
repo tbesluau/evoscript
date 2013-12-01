@@ -30,7 +30,12 @@ The stop button stops the evolution. Clicking the start button again after stopp
 ### Info section
 
 The info section on top of the screen displays the following information:
- * TBC after it's implemented
+ * Generation: the generation number the program is at. A generation is a wave of reproduction/mutation of the whole pool.
+ * Best Fitness: the fitness value of the best individual in the pool.
+ * Total: the sum of all the fitness values of all individuals in the pool
+ * Best Representation: the representation of the best individual as a string, for instance:
+
+        nodeA(nodeB(1, A), nodeC(0.342, "foobar"))
 
 ### Data files (CSV)
 

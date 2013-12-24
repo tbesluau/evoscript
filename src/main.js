@@ -3,34 +3,50 @@ $('#workspace').html('evoscript loaded');
 $('#infospace').html(
 	'Press "Start" to get started, after defining your representation functions and fitness functions in functions.js'
 );
+// hatchery is our main hatchery
+var hatchery = new Hatchery();
+// underdogs is our secondary hatchery
+// that gets reset every so often and its
+// top dogs can get transfered into the main hatch
+var underdogs = new Hatchery();
+
+underdogs.resetRate = 200;
+underdogs.pushTo = hatchery;
+underdogs.infospace = '#infospace-underdog';
+underdogs.drawBest = false;
 
 // basic buttons wiring
-var hatchery = new Hatchery();
 $('#evoscript-trigger').click(function () {
 	if(!hatchery.running) {
-		readFile();
-		startSystem();
+		readFile([hatchery, underdogs]);
+		startSystem([hatchery, underdogs]);
 	} else {
 		hatchery.pause();
+		underdogs.pause();
 	}
 });
 $('#evoscript-stop').click(function () {
 	hatchery.stop();
+	underdogs.stop();
 });
 
-function startSystem () {
+function startSystem (hatches) {
 	if(waitforfile) {
 		setTimeout(startSystem, 50);
 	} else {
-		hatchery.start();
+		$.each(hatches, function(index, hatch) {
+			hatch.start();
+		});
 	}
 }
 
 // handling file uploads for list based fitness functions
-function readFile() {
+function readFile(hatches) {
 	var file = $('#file-field')[0].files[0];
 	if (file) {
-		hatchery.useList = true;
+		$.each(hatches, function(index, hatch) {
+			hatch.useList = true;
+		});
 		//global on purpose
 		waitforfile = true;
 		var reader = new FileReader();

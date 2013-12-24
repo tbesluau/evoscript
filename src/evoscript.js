@@ -5,15 +5,18 @@ function RepNode (method) {
 	
 	var self = this;
 
-	this.fitness = 0;
+	this.fitness = null;
 	this.method = method;
 	this.isLeaf = typeof(this.method) != 'function';
 	this.representation = '';
+	this.removalFlag = false;
 
 	this.parentNode = null;
 	this.children = [];
 	this.depth = 0;
 
+	// use this function to obtain a copy of the item. This is the preferred method
+	// for cloning there are good changes toolkit methods for this won't work
 	this.clone = function () {
 		var newNode = new RepNode(self.method);
 		if(self.isLeaf) {
@@ -26,6 +29,8 @@ function RepNode (method) {
 		}
 	};
 
+	// recursively determins the representation of the node, as string that
+	// can be evaluated during fitness calculation
 	this.represent = function () {
 		var childrenNames = [];
 		$.each(self.children, function (key, child) {
@@ -37,6 +42,7 @@ function RepNode (method) {
 		return representation;
 	};
 
+	// adds a node as the child of this node
 	this.addChild = function (node, index) {
 		if(index === undefined) {
 			self.children.push(node);
@@ -47,14 +53,18 @@ function RepNode (method) {
 		node.depth = self.depth + 1;
 	};
 
+	// recalculates the depth from this node down
 	this.recalibrate = function () {
-		self.fitness = 0;
+		self.fitness = null;
 		self.depth = this.parentNode? this.parentNode.depth + 1: 0;
 		$.each(self.children, function (index, child) {
 			child.recalibrate();
 		});
 	};
 
+	// returns a list of all nodes from this node down
+	// useful to pick a random one among them
+	// XXX we dhouldn't need that, let's random as we go down
 	this.allNodes = function () {
 		var nodes = [self];
 		$.each(self.children, function (index, child) {
@@ -78,10 +88,28 @@ function Hatchery () {
 	this.mutationRate = 0.02;
 	// what share of the population gets to reproduce
 	this.crossRate = 0.1;
+	// how big can our representation tree be
+	this.maxDepth = 4;
+	// are there random events in evaluation of fitness?
+	// if not we will not re-evaluate an individual again
+	this.forceEval = false;
+	// after how many generation to wipe clean
+	// 0 means never, keep it there for single hatch systems
+	this.resetRate = 0;
+	// DOM element selector to show info
+	this.infospace = '#infospace';
+	// whether to draw best individual on screen
+	// set to false for underdogs hatches
+	this.drawBest = true;
+	// if there is a reset top results can be pushed to a main hatch
+	this.pushTo = null;
+	// the ratio to push
+	this.topPush = 0.05;
+	// the main hatch reserve to pull
+	this.reserve = [];
 
 	this.generation = 0;
 	this.pool = [];
-	this.maxDepth = 4;
 	this.best = null;
 
 	this.running = false;
@@ -103,19 +131,38 @@ function Hatchery () {
 		this.mutatePool();
 		this.evalPool();
 		this.generation += 1;
+		if(this.resetRate && this.generation >= this.resetRate) {
+			this.stop();
+			this.pushTo.reserve = self.pool.splice(0, Math.floor(self.pool.length * self.topPush));
+			window.setTimeout(self.start, 1000);
+		}
 	};
 
 	this.evalPool = function () {
+		if(self.reserve.length) {
+			self.pool = self.pool.concat(self.reserve);
+			self.reserve = [];
+		}
 		$.each(this.pool, function (index, individual) {
 			self.evalIndividual(individual);
 		});
 		self.pool.sort(function (a, b) {
+			var abest = a.fitness <= b.fitness;
+			if(b.removalFlag && !a.removalFlag) {
+				return -1;
+			}
+			if(a.removalFlag && !b.removalFlag) {
+				return 1;
+			}
 			return a.fitness <= b.fitness? -1: 1;
 		});
 		self.pool.splice(self.poolSize);
 	};
 
 	this.evalIndividual = function (individual) {
+		if(!this.forceEval && individual.fitness !== null) {
+			return individual.fitness;
+		}
 		individual.fitness = es_fitness(individual.representation, self.useList);
 		return individual.fitness;
 	};
@@ -180,8 +227,34 @@ function Hatchery () {
 		}
 		newNode1.represent();
 		newNode2.represent();
-		self.pool.push(newNode1);
-		self.pool.push(newNode2);
+		self.evalIndividual(newNode1);
+		self.evalIndividual(newNode2);
+		var bestnew,
+			lowNew,
+			bestRoot,
+			lowRoot;
+		if(newNode1.fitness < newNode2.fitness) {
+			bestNew = newNode1;
+			lowNew = newNode2;
+		} else {
+			bestNew = newNode2;
+			lowNew = newNode1;
+		}
+		if(rootNode1.fitness < rootNode2.fitness) {
+			bestRoot = rootNode1;
+			lowRoot = rootNode2;
+		} else {
+			bestRoot = rootNode2;
+			lowRoot = rootNode1;
+		}
+		if(bestNew.fitness <= lowRoot.fitness) {
+			self.pool.push(bestNew);
+			lowRoot.removalFlag = true;
+			if(lowNew.fitness <= bestRoot.fitness) {
+				self.pool.push(lowNew);
+				bestRoot.removalFlag = true;
+			}
+		}
 	};
 
 	this.trimNode = function (rootNode) {
@@ -199,7 +272,6 @@ function Hatchery () {
 	};
 
 	this.mutate = function (rootNode) {
-		var before = rootNode.representation;
 		var newNode = rootNode.clone();
 		allNodes = newNode.allNodes();
 		mutedNode = allNodes[Math.floor(Math.random()*allNodes.length)];
@@ -216,8 +288,11 @@ function Hatchery () {
 			}
 		}
 		newNode.represent();
-		self.pool.push(newNode);
-		var after = newNode.representation;
+		self.evalIndividual(newNode);
+		if(newNode.fitness <= rootNode.fitness) {
+			self.pool.push(newNode);
+			rootNode.removalFlag = true;
+		}
 	};
 
 	this.getBestCandidate = function () {
@@ -242,9 +317,11 @@ function Hatchery () {
 		var best = self.getBestCandidate();
 		if(!self.best || best.fitness < self.best.fitness) {
 			self.best = best;
-			draw(self.best);
+			if(self.drawBest) {
+				draw(self.best);
+			}
 		}
-		$('#infospace').html(
+		$(self.infospace).html(
 			'<table><tr>' +
 			'<th>Generation</th>' + 
 			'<th>Best Fitness</th>' + 

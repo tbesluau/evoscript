@@ -15,22 +15,22 @@ body {
 	margin: 10px 3px;
 }
 
-#infospace table {
+#infospaces table {
 	border-collapse: collapse;
 }
 
-#infospace td {
+#infospaces td {
 	border: 1px solid black;
 	text-align: center;
 }
 
-#infospace td div {
+#infospaces td div {
 	padding: 10px;
 	width: 200px;
 	overflow-x: scroll;
 }
 
-#infospace th {
+#infospaces th {
 	background-color: #aa5555;
 	border: 1px solid black;
 }

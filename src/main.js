@@ -32,7 +32,9 @@ $('#evoscript-stop').click(function () {
 
 function startSystem (hatches) {
 	if(waitforfile) {
-		setTimeout(startSystem, 50);
+		setTimeout(function () {
+			startSystem(hatches);
+		}, 50);
 	} else {
 		$.each(hatches, function(index, hatch) {
 			hatch.start();

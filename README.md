@@ -5,6 +5,15 @@ Open source genetic programming library in javascript.
 
 What is a [genetic algorithm](http://en.wikipedia.org/wiki/Genetic_algorithm) and what is [genetic programming](http://en.wikipedia.org/wiki/Genetic_programming)?
 
+## TODO
+
+This is very much work in progress, the following points are the next steps that will be worked on.
+
+ * ~~Multi hatcheries with exchange of best individuals~~
+ * System to add/edit/delete functions from the UI
+ * Additional type of function to create stats from csv files to be part of the evalutation as well
+ * System to share functions and individuals online between hatches to enable multi-client collaboration
+
 ## Hello world
 
     git clone https://github.com/tbesluau/evoscript.git

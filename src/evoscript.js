@@ -115,6 +115,7 @@ function Hatchery () {
 	this.running = false;
 	this.started = false;
 
+	// init/reset function
 	this.init = function () {
 		this.pool = [];
 		this.best = null;
@@ -126,6 +127,7 @@ function Hatchery () {
 		}
 	};
 
+	// manages the whole happening for each generation
 	this.nextGen = function () {
 		this.crossPool();
 		this.mutatePool();
@@ -138,6 +140,7 @@ function Hatchery () {
 		}
 	};
 
+	// evaluate the whole pool and removes unfit individuals
 	this.evalPool = function () {
 		if(self.reserve.length) {
 			self.pool = self.pool.concat(self.reserve);
@@ -159,6 +162,7 @@ function Hatchery () {
 		self.pool.splice(self.poolSize);
 	};
 
+	// runs the fitness function on an individual
 	this.evalIndividual = function (individual) {
 		if(!this.forceEval && individual.fitness !== null) {
 			return individual.fitness;
@@ -167,6 +171,8 @@ function Hatchery () {
 		return individual.fitness;
 	};
 
+	// random individuals throughout the pool are mutated
+	// mutated is kept if at least as good as original
 	this.mutatePool = function () {
 		$.each(this.pool, function (index, individual) {
 			if(Math.random() < self.mutationRate) {
@@ -175,6 +181,8 @@ function Hatchery () {
 		});
 	};
 	
+	// top individuals get to reproduce
+	// offsprings are kept if better than a parent
 	this.crossPool = function () {
 		var crossCandidates = [];
 		for(var i=0; i<self.poolSize * self.crossRate; i++) {
@@ -187,6 +195,8 @@ function Hatchery () {
 		}
 	};
 
+	// selects a random node off of each individual and exchanges it
+	// then trims to max depth
 	this.cross = function (rootNode1, rootNode2) {
 		var newNode1 = rootNode1.clone();
 		var newNode2 = rootNode2.clone();
@@ -257,6 +267,8 @@ function Hatchery () {
 		}
 	};
 
+	// trims a tree by replacing nodes that are at max depth
+	// by random leaves
 	this.trimNode = function (rootNode) {
 		if(!rootNode.isLeaf) {
 			if(rootNode.depth > self.maxDepth - 1) {
@@ -271,6 +283,8 @@ function Hatchery () {
 		}
 	};
 
+	// picks a random node off of an individual
+	// generates a new subtree from there down
 	this.mutate = function (rootNode) {
 		var newNode = rootNode.clone();
 		allNodes = newNode.allNodes();
@@ -300,6 +314,8 @@ function Hatchery () {
 		return poolTop;
 	};
 
+	// creates a tree from scratch
+	// TODO does it have to be a full depth tree?
 	this.generateTree = function (depth, parentNode) {
 		var rootNode = parentNode || new RepNode(getESNodeFunction());
 		var leafChildrenOnly = depth < 2;
@@ -313,12 +329,14 @@ function Hatchery () {
 		return rootNode;
 	};
 
+	// prints the generation's stats and draws the best individual
+	// if the es_draw function is setup
 	this.draw = function () {
 		var best = self.getBestCandidate();
 		if(!self.best || best.fitness < self.best.fitness) {
 			self.best = best;
 			if(self.drawBest) {
-				draw(self.best);
+				es_draw(self.best);
 			}
 		}
 		$(self.infospace).html(
@@ -338,6 +356,8 @@ function Hatchery () {
 
 	};
 
+	// returns the total fitness of every individual in the pool
+	// TODO can this be calculated somewhere on the fly?
 	this.getTotal = function () {
 		var total = 0;
 		$.each(self.pool, function (index, individual) {
@@ -346,6 +366,8 @@ function Hatchery () {
 		return total;
 	};
 
+	// simple running loop that will start the next generation
+	// and draw it
 	this.run = function () {
 		self.nextGen();
 		self.draw();
@@ -354,6 +376,8 @@ function Hatchery () {
 		}
 	};
 
+	// priming and starting
+	// or unpausing if already started
 	this.start = function () {
 		if(!self.started) {
 			self.init();
@@ -363,10 +387,14 @@ function Hatchery () {
 		self.run();
 	};
 
+	// pauses without consequences
+	// starting from there just unpauses
 	this.pause = function () {
 		self.running = false;
 	};
 
+	// stops the evolution
+	// starting again will start from scratch
 	this.stop = function () {
 		self.started = false;
 		self.running = false;

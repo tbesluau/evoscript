@@ -106,7 +106,7 @@ function getESLeafFunction () {
 }
 
 // drawing function, feel free to use your own
-function draw (node, parentDOM) {
+function es_draw (node, parentDOM) {
 	if(!parentDOM) {
 		$('#workspace').html('');
 		parentDOM = $('#workspace');

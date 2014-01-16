@@ -121,7 +121,7 @@ function es_draw (node, parentDOM) {
 		);
 		parentDOM.append(div);
 		$.each(node.children, function (index, child) {
-			draw(child, div);
+			es_draw(child, div);
 		});
 	}
 }

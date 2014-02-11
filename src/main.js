@@ -56,14 +56,45 @@ function readFile(hatches) {
 		es_list = [];
 		reader.readAsText(file, "UTF-8");
 		reader.onload = function (evt) {
+			var linesplit;
 			$.each(evt.target.result.split(/\r\n|\r|\n/g), function (index, line) {
-				es_list.push(line.split(','));
+				if (line.replace(',', '').replace(' ', '')) {
+					linesplit = line.split(',');
+					for (var i = 0; i < linesplit.length; i++) {
+						if (!isNaN(linesplit[i])) {
+							linesplit[i] = linesplit[i] * 1;
+						}
+					}
+					es_list.push(linesplit);
+				}
 			});
 			// global on purpose
 			es_headers = es_list.splice(0, 1);
 			if(es_headers.length === 1) {
 				es_headers = es_headers[0];
 			}
+			var newheaders = [];
+			$.each(es_headers, function (index, name) {
+				$.each(es_stats, function (ind, statfunc) {
+					newheaders.push(name + '_' + statfunc.name);
+				});
+			});
+			var originum = es_headers.length;
+			es_headers = es_headers.concat(newheaders);
+			var newlist = [];
+			for (var i = 0; i < es_list.length; i++) {
+				var linelist = es_list[i];
+				processedlist = [];
+				var n = originum;
+				$.each(linelist, function (index, value) {
+					$.each(es_stats, function (ind, statfunc) {
+						processedlist.push(statfunc(value, newlist, n));
+						n += 1;
+					});
+				});
+				newlist.push(linelist.concat(processedlist));
+			}
+			es_list = newlist;
 			waitforfile = false;
 			// since we are using a list, make headers available as nodes
 			es_leafFunctions.push(

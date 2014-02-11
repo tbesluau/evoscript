@@ -11,7 +11,7 @@ This is very much work in progress, the following points are the next steps that
 
  * ~~Multi hatcheries with exchange of best individuals~~
  * System to add/edit/delete functions from the UI
- * Additional type of function to create stats from csv files to be part of the evalutation as well
+ * ~~Additional type of function to create stats from csv files to be part of the evalutation as well~~
  * System to share functions and individuals online between hatches to enable multi-client collaboration
 
 ## Hello world

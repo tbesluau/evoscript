@@ -28,13 +28,15 @@ var fitness_simple = function (representation) {
 var fitness_list = function (representation) {
 	var total = 0;
 	var stored = null;
-	for (i = 0; i < es_list.length; i++) {
+	eval('var func = function() { return ' + representation + '; }');
+
+	for (var i = 0, listlen = es_list.length; i < listlen; i++) {
 		line = es_list[i];
-		for (j = 0; j < line.length; j++) {
+		for (var j = 0, linelen = line.length; j < linelen; j++) {
 			// XXX this eval should be easy to get rid of
 			eval(es_headers[j]+ ' = ' + line[j]);
 		}
-		var result = eval(representation);
+		var result = func();
 		// do something with this result here
 		// in this example, we compare it with the next
 		// value of the first header, so for headers A, B, C, D
@@ -42,7 +44,7 @@ var fitness_list = function (representation) {
 		if(stored !== null) {
 			total += Math.abs(stored - line[0]);
 		}
-		stored = result + line[0];
+		stored = result;
 	}
 	return total;
 };

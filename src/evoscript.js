@@ -185,10 +185,10 @@ function Hatchery () {
 	// offsprings are kept if better than a parent
 	this.crossPool = function () {
 		var crossCandidates = [];
-		for(var i=0; i<self.poolSize * self.crossRate; i++) {
+		for(var i = 0, len = self.poolSize * self.crossRate; i < len; i++) {
 			crossCandidates.push(self.pool[i]);
 		}
-		for(var j=0; j<self.poolSize * self.crossRate / 2; j++) {
+		for(var j = 0, len = Math.floor(self.poolSize * self.crossRate / 2); j < len; j++) {
 			var best = crossCandidates.splice(0, 1)[0];
 			var randomOther = crossCandidates.splice(Math.floor(Math.random() * crossCandidates.length), 1)[0];
 			self.cross(best, randomOther);
@@ -320,7 +320,7 @@ function Hatchery () {
 		var rootNode = parentNode || new RepNode(getESNodeFunction());
 		var leafChildrenOnly = depth < 2;
 		if(!rootNode.isLeaf) {
-			for(var i=0; i<rootNode.method.length; i++) {
+			for(var i = 0, len = rootNode.method.length; i < len; i++) {
 				childNode = new RepNode(leafChildrenOnly? getESLeafFunction(): getESNodeFunction());
 				rootNode.addChild(childNode);
 				self.generateTree(depth - 1, childNode);

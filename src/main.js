@@ -22,10 +22,10 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 				});
 				// global on purpose
 				headers = data.splice(0, 1);
-				/*if(headers.length === 1) {
+				if(headers.length === 1) {
 					headers = headers[0];
 				}
-
+				/*
 				var newheaders = [];
 				$.each(headers, function (index, name) {
 					$.each(es_stats, function (ind, statfunc) {
@@ -71,7 +71,7 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 
 
 
-	var mainHatch, underdogs;
+	var mainHatch, underdogs, fileLoaded, start;
 
 
 	/**
@@ -81,43 +81,62 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 
 	$('#evoscript-trigger').click(function () {
 		if(!mainHatch || !mainHatch.isRunning()) {
-			readFile(function() {
-				mainHatch = new evoscript({
-					poolSize:1000,
-					throttle: 0,
-					leafFunctions: leafFunctions,
-					nodeFunctions: nodeFunctions,
-					fitnessFunction: new fitnessFunction(headers, data),
-					onGeneration: function(data) {
-						$("#infospace").html(
-							'<table><tr>' +
-								'<th>Generation</th>' +
-								'<th>Best Fitness</th>' +
-								'<th>Total</th>' +
-								'<th>Best Representation</th>' +
-								'</tr><tr>' +
-								'<td><div>' + data.generation + '</div></td>' +
-								'<td><div>' + data.pool[0].cached + '</div></td>' +
-								'<td><div>' + "" + '</div></td>' +
-								'<td><button onclick="window.prompt(\'Best representation: \', \'' +
-								data.pool[0].representation() +'\');">See/Copy</button></td>' +
-								'</tr></table>'
-						);
-						$("#workspace").html(data.pool[0].representation());
-					}
-				});
-				underdogs = new evoscript({
-					poolSize:5,
-					throttle: 1000,
-					resetRate: 5,
-					leafFunctions: leafFunctions,
-					nodeFunctions: nodeFunctions,
-					fitnessFunction: new fitnessFunction(headers, data)
-				});
-
+			if(fileLoaded) {
 				mainHatch.start();
 				//underdogs.start();
-			});
+			} else {
+
+				readFile(function() {
+					start = new Date();
+					fileLoaded = true;
+					mainHatch = new evoscript({
+						poolSize:1000,
+						throttle: 0,
+						leafFunctions: leafFunctions,
+						nodeFunctions: nodeFunctions,
+						fitnessFunction: new fitnessFunction({
+							headers: headers,
+							data: data,
+							targetColumn: 'A'
+						}),
+						onGeneration: function(data) {
+							if(data.generation % 100 === 0) {
+								$("#infospace").html(
+									'<table><tr>' +
+										'<th>Generation</th>' +
+										'<th>Best Fitness</th>' +
+										'<th>Time Running</th>' +
+										'<th>Best Representation</th>' +
+										'</tr><tr>' +
+										'<td><div>' + data.generation + '</div></td>' +
+										'<td><div>' + data.pool[0].cached + '</div></td>' +
+										'<td><div>' + ((new Date()) - start) / 1000 + ' s</div></td>' +
+										'<td><button onclick="window.prompt(\'Best representation: \', \'' +
+										data.pool[0].representation() +'\');">See/Copy</button></td>' +
+										'</tr></table>'
+								);
+								$("#workspace").html(data.pool[0].representation());
+							}
+						}
+					});
+					underdogs = new evoscript({
+						poolSize:5,
+						throttle: 1000,
+						resetRate: 5,
+						leafFunctions: leafFunctions,
+						nodeFunctions: nodeFunctions,
+						fitnessFunction: new fitnessFunction({
+							headers: headers,
+							data: data,
+							targetColumn: 'D'
+						})
+					});
+
+					mainHatch.start();
+					//underdogs.start();
+				});
+
+			}
 		} else {
 			mainHatch.pause();
 			underdogs.pause();

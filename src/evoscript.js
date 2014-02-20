@@ -25,7 +25,7 @@ define(['nodeRep'], function(nodeRep) {
 
 		function evalPool() {
 			for(var i = 0, l = pool.length; i < l; i++) {
-				pool[i].getFitness(_options.fitnessFunction);
+				pool[i].getFitness(_options.fitnessFunction, true);
 			}
 
 			pool.sort(function(a,b) {

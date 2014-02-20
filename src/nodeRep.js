@@ -4,7 +4,6 @@ define([], function() {
 		var children = null;
 		var depth = options.depth;
 		var isLeaf = false;
-		var fitness = null;
 		var method = null;
 
 		function generate() {
@@ -51,10 +50,18 @@ define([], function() {
 				leafFunctions: options.leafFunctions
 			});
 		}
+
 		this.getChild = function(index) {
 			return children[index];
 		}
 
+		this.cross = function(other) {
+			this.reset();
+
+		}
+		this.reset = function() {
+			this.cached = null;
+		}
 
 		this.isLeaf = function() {
 			return isLeaf;
@@ -66,9 +73,9 @@ define([], function() {
 			return method;
 		}
 		this.cached = null;
-		this.getFitness = function(fitfunc) {
-			if(fitness !== null) {
-				return fitness;
+		this.getFitness = function(fitfunc, usecache) {
+			if(usecache && this.cached !== null) {
+				return this.cached;
 			} else {
 				if(!fitfunc) {
 					console.log('here');
@@ -109,6 +116,7 @@ define([], function() {
 			return rep;
 		}
 		this.mutate = function() {
+			this.reset();
 			var mutating = Math.random() < 1/(depth + 1);
 
 			if(mutating) {

@@ -44,6 +44,20 @@ define(['nodeRep'], function(nodeRep) {
 			}
 		}
 
+		function crossPool() {
+			var crossCandidates = [];
+			// This gets the crossRate top % of the pool only. It should also include others, but at a lower weighted frequency.
+			for(var i = 0, len = _options.poolSize * _options.crossRate; i < len; i++) {
+				crossCandidates.push(pool[i]);
+			}
+			for(var j = 0, len = crossCandidates; j < len; j++) {
+				var child1 = crossCandidates[j].getClone();
+				var child2 = child1.cross(crossCandidates[Math.floor(Math.random() * crossCandidates.length)].getClone());
+
+
+			}
+		}
+
 		this.getKeepers = function (reset){
 			var x = keepers;
 			if(reset === true) {
@@ -96,7 +110,7 @@ define(['nodeRep'], function(nodeRep) {
 
 		// Evolves a single generation.
 		this.evolve = function () {
-			//crossPool();
+			crossPool();
 			mutatePool();
 			evalPool();
 			generation += 1;

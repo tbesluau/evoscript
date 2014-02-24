@@ -23,6 +23,41 @@ define(['nodeRep'], function(nodeRep) {
 		var started = false;
 		var keepers = [];
 
+		function evalPool() {
+			for(var i = 0, l = pool.length; i < l; i++) {
+				pool[i].getFitness(_options.fitnessFunction, true);
+			}
+
+			pool.sort(function(a,b) {
+				return a.cached <= b.cached ? -1: 1;
+			});
+			pool.splice(_options.poolSize);
+		}
+
+		function mutatePool() {
+			for(var i = 0, l = pool.length; i < l; i++) {
+				if(Math.random() < _options.mutationRate) {
+					var mutator = pool[i].getClone();
+					mutator.mutate()
+					pool.push(mutator);
+				}
+			}
+		}
+
+		function crossPool() {
+			var crossCandidates = [];
+			// This gets the crossRate top % of the pool only. It should also include others, but at a lower weighted frequency.
+			for(var i = 0, len = _options.poolSize * _options.crossRate; i < len; i++) {
+				crossCandidates.push(pool[i]);
+			}
+			for(var j = 0, len = crossCandidates; j < len; j++) {
+				var child1 = crossCandidates[j].getClone();
+				var child2 = child1.cross(crossCandidates[Math.floor(Math.random() * crossCandidates.length)].getClone());
+
+
+			}
+		}
+
 		this.getKeepers = function (reset){
 			var x = keepers;
 			if(reset === true) {
@@ -65,17 +100,27 @@ define(['nodeRep'], function(nodeRep) {
 			best = null;
 			generation = 0;
 			for(var i = 0; i < _options.poolSize; i++) {
-				pool.push(generateTree(_options.maxDepth));
+				pool.push(new nodeRep({
+					depth: _options.maxDepth,
+					nodeFunctions: _options.nodeFunctions,
+					leafFunctions: _options.leafFunctions
+				}));
 			}
 		}
 
 		// Evolves a single generation.
 		this.evolve = function () {
-			//crossPool();
-			//mutatePool();
-			//evalPool();
+			crossPool();
+			mutatePool();
+			evalPool();
 			generation += 1;
-			console.log(pool[0].representation());
+			if(typeof(_options.onGeneration) === "function") {
+				_options.onGeneration({
+					pool: pool,
+					generation: generation
+				});
+			}
+
 			if(_options.resetRate && generation >= _options.resetRate) {
 				this.stop();
 				keepers = keepers.concat(pool.splice(0, Math.floor(pool.length * _options.keepRate)));
@@ -83,18 +128,7 @@ define(['nodeRep'], function(nodeRep) {
 			}
 		}
 
-		// Generate a single item.
-		var generateTree = function (depth) {
-			if(depth === 1) {
-				return new nodeRep(_options.leafFunctions);
-			} else {
-				var node = new nodeRep(_options.nodeFunctions);
-				for(var i = 0, len = node.getMethod().length; i < len; i++) {
-					node.addChild(generateTree(depth - 1));
-				}
-				return node;
-			}
-		};
+
 	};
 
 

@@ -38,7 +38,7 @@ define(['nodeRep'], function(nodeRep) {
 			for(var i = 0, l = pool.length; i < l; i++) {
 				if(Math.random() < _options.mutationRate) {
 					var mutator = pool[i].getClone();
-					mutator.mutate()
+					mutator.mutate();
 					pool.push(mutator);
 				}
 			}
@@ -64,11 +64,15 @@ define(['nodeRep'], function(nodeRep) {
 				keepers = [];
 			}
 			return x;
-		}
+		};
+
+		this.getBestIndividual = function () {
+			return pool[0].cached;
+		};
 
 		this.isRunning = function () {
 			return running;
-		}
+		};
 
 		this.start = function () {
 			if(!started) {
@@ -77,16 +81,16 @@ define(['nodeRep'], function(nodeRep) {
 			}
 			running = true;
 			$.proxy(run, this)();
-		}
+		};
 
 		this.pause = function () {
 			running = false;
-		}
+		};
 
 		this.stop = function () {
 			running = false;
 			started = false;
-		}
+		};
 
 		var run = function () {
 			if(running) {
@@ -106,7 +110,7 @@ define(['nodeRep'], function(nodeRep) {
 					leafFunctions: _options.leafFunctions
 				}));
 			}
-		}
+		};
 
 		// Evolves a single generation.
 		this.evolve = function () {
@@ -126,7 +130,7 @@ define(['nodeRep'], function(nodeRep) {
 				keepers = keepers.concat(pool.splice(0, Math.floor(pool.length * _options.keepRate)));
 				window.setTimeout($.proxy(this.start, this), _options.throttle + 1000);
 			}
-		}
+		};
 
 
 	};

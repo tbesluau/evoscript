@@ -1,3 +1,5 @@
+/* globals define */
+
 define([], function() {
 	var nodeRep = function(options) {
 
@@ -49,29 +51,32 @@ define([], function() {
 				nodeFunctions: options.nodeFunctions,
 				leafFunctions: options.leafFunctions
 			});
-		}
+		};
 
 		this.getChild = function(index) {
 			return children[index];
-		}
+		};
 
 		this.cross = function(other) {
 			this.reset();
+		};
 
-		}
 		this.reset = function() {
 			this.cached = null;
-		}
+		};
 
 		this.isLeaf = function() {
 			return isLeaf;
-		}
+		};
+
 		this.getDepth = function() {
 			return depth;
-		}
+		};
+
 		this.getMethod = function() {
 			return method;
-		}
+		};
+
 		this.cached = null;
 		this.getFitness = function(fitfunc, usecache) {
 			if(usecache && this.cached !== null) {
@@ -83,7 +88,8 @@ define([], function() {
 				this.cached = fitfunc(this.evaluateFunc());
 				return this.cached;
 			}
-		}
+		};
+
 		this.evaluateFunc = function() {
 
 			var childrenFunctions = [];
@@ -105,7 +111,8 @@ define([], function() {
 					return method.apply(null, args);
 				};
 			return rep;
-		}
+		};
+
 		this.representation = function() {
 			var childrenNames = [];
 			for(var i = 0, l = children.length; i < l; i++) {
@@ -114,7 +121,8 @@ define([], function() {
 			var rep = this.isLeaf() ? method:
 				method.name + '(' + childrenNames.join(',') + ')';
 			return rep;
-		}
+		};
+
 		this.mutate = function() {
 			this.reset();
 			var mutating = Math.random() < 1/(depth + 1);
@@ -130,7 +138,7 @@ define([], function() {
 				}
 			}
 			return mutating;
-		}
+		};
 
 	};
 

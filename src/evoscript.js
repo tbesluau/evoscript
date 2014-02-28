@@ -22,24 +22,33 @@ define(['nodeRep'], function(nodeRep) {
 		var running = false;
 		var started = false;
 		var keepers = [];
+		var totalFitness;
 
 		function evalPool() {
+			var total = 0;
 			for(var i = 0, l = pool.length; i < l; i++) {
-				pool[i].getFitness(_options.fitnessFunction, true);
+				total += pool[i].getFitness(_options.fitnessFunction);
 			}
 
 			pool.sort(function(a,b) {
 				return a.cached <= b.cached ? -1: 1;
 			});
 			pool.splice(_options.poolSize);
+			totalFitness = total;
 		}
 
 		function mutatePool() {
+			var original, mutant, lineage;
 			for(var i = 0, l = pool.length; i < l; i++) {
 				if(Math.random() < _options.mutationRate) {
-					var mutator = pool[i].getClone();
-					mutator.mutate();
-					pool.push(mutator);
+					original = pool[i];
+					lineage = original.lineage;
+					mutant = original.getClone();
+					mutant.mutate();
+					if (mutant.getFitness(_options.fitnessFunction) <= original.getFitness(_options.fitnessFunction)) {
+						mutant.lineage = lineage + 'M';
+						pool[i] = mutant;
+					}
 				}
 			}
 		}
@@ -47,14 +56,20 @@ define(['nodeRep'], function(nodeRep) {
 		function crossPool() {
 			var crossCandidates = [];
 			// This gets the crossRate top % of the pool only. It should also include others, but at a lower weighted frequency.
-			for(var i = 0, len = _options.poolSize * _options.crossRate; i < len; i++) {
+			for (var i = 0, len = _options.poolSize * _options.crossRate; i < len; i++) {
 				crossCandidates.push(pool[i]);
 			}
-			for(var j = 0, len = crossCandidates; j < len; j++) {
-				var child1 = crossCandidates[j].getClone();
-				var child2 = child1.cross(crossCandidates[Math.floor(Math.random() * crossCandidates.length)].getClone());
-
-
+			var mother, father, child, lineage;
+			for (var j = 0, l = crossCandidates.length; j < l; j++) {
+				mother = crossCandidates[j];
+				lineage = mother.lineage;
+				father = crossCandidates[Math.floor(Math.random() * crossCandidates.length)];
+				child = mother.getClone();
+				child.cross(father);
+				if (child.getFitness(_options.fitnessFunction) <= mother.getFitness(_options.fitnessFunction)) {
+					child.lineage = lineage + 'C';
+					pool[j] = child;
+				}
 			}
 		}
 
@@ -67,7 +82,15 @@ define(['nodeRep'], function(nodeRep) {
 		};
 
 		this.getBestIndividual = function () {
-			return pool[0].cached;
+			return pool[0];
+		};
+
+		this.getWorstIndividual = function () {
+			return pool[pool.length - 1];
+		};
+
+		this.getTotalFitness = function () {
+			return totalFitness;
 		};
 
 		this.isRunning = function () {

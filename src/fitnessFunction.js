@@ -29,6 +29,6 @@ define(function() {
 				stored = result;
 			}
 			return total;
-		}
+		};
 	};
-})
+});

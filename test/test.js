@@ -1,9 +1,15 @@
 require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFunction'], function($, evoscript, nodeFunctions, leafFunctions, fitnessFunction) {
 
-	Math.seed = 12345;
+	Math.seed = 9;
 	Math.random = function () {
 		var x = Math.sin(Math.seed++) * 10000; return x - Math.floor(x);
 	};
+	leafFunctions.push(
+		function es_header () {
+			return headers[Math.floor(Math.random()*headers.length)];
+		}
+	);
+
 
 	var data = [
 		[1, 2, 3],
@@ -20,7 +26,9 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 	];
 	var headers = ['A', 'B', 'C'];
 	mainHatch = new evoscript({
-		poolSize:1000,
+		poolSize: 20,
+		mutationRate: 0.2,
+		crossRate: 0.2,
 		throttle: 0,
 		leafFunctions: leafFunctions,
 		nodeFunctions: nodeFunctions,
@@ -30,7 +38,12 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 			targetColumn: 'A'
 		}),
 		onGeneration: function(data) {
-			if(data.generation % 500 === 0) {
+			/*console.log('-----------------------------------------');
+			console.log(mainHatch.getBestIndividual().cached);
+			console.log(mainHatch.getBestIndividual().lineage);
+			console.log(mainHatch.getWorstIndividual().cached);
+			console.log(mainHatch.getWorstIndividual().lineage);*/
+			if(data.generation % 800 === 0) {
 				$("#testspace").html(
 					'<table><tr>' +
 						'<th>Generation</th>' +
@@ -45,7 +58,11 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 						'</tr></table>'
 				);
 				$("#testspace").append(data.pool[0].representation());
-				console.log(mainHatch.getBestIndividual() == 25.999999999999996);
+				window.best = mainHatch.getBestIndividual();
+				if (mainHatch.getBestIndividual().cached == 9) {
+					// output to be improved.
+					console.log('test passed');
+				}
 				mainHatch.stop();
 			}
 		}

@@ -1,6 +1,6 @@
-require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFunction'], function($, evoscript, nodeFunctions, leafFunctions, fitnessFunction) {
+require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFunction', 'nodeRep'], function($, evoscript, nodeFunctions, leafFunctions, fitnessFunction, NodeRep) {
 
-	Math.seed = 9;
+	Math.seed = 5;
 	Math.random = function () {
 		var x = Math.sin(Math.seed++) * 10000; return x - Math.floor(x);
 	};
@@ -9,7 +9,6 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 			return headers[Math.floor(Math.random()*headers.length)];
 		}
 	);
-
 
 	var data = [
 		[1, 2, 3],
@@ -25,6 +24,24 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 		[0, 2, 3],
 	];
 	var headers = ['A', 'B', 'C'];
+	var fitnessFunc = new fitnessFunction({
+		headers: headers,
+		data: data,
+		targetColumn: 'A'
+	});
+
+	var testNode = new NodeRep({
+		depth: 7,
+		nodeFunctions: nodeFunctions,
+		leafFunctions: leafFunctions
+	});
+	testNode.getFitness(fitnessFunc);
+	console.log(testNode.representation());
+
+	for (var i = 0; i < 20; i++) {
+		console.log(testNode.randomNode().method);
+	}
+
 	mainHatch = new evoscript({
 		poolSize: 20,
 		mutationRate: 0.2,
@@ -32,11 +49,7 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 		throttle: 0,
 		leafFunctions: leafFunctions,
 		nodeFunctions: nodeFunctions,
-		fitnessFunction: new fitnessFunction({
-			headers: headers,
-			data: data,
-			targetColumn: 'A'
-		}),
+		fitnessFunction: fitnessFunc,
 		onGeneration: function(data) {
 			/*console.log('-----------------------------------------');
 			console.log(mainHatch.getBestIndividual().cached);

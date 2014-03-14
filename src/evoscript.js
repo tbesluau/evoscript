@@ -27,7 +27,7 @@ define(['nodeRep'], function(nodeRep) {
 		function evalPool() {
 			var total = 0;
 			for(var i = 0, l = pool.length; i < l; i++) {
-				total += pool[i].getFitness(_options.fitnessFunction);
+				total += pool[i].getFitness(_options.fitnessFunction, i === 0);
 			}
 
 			pool.sort(function(a,b) {
@@ -144,7 +144,9 @@ define(['nodeRep'], function(nodeRep) {
 			if(typeof(_options.onGeneration) === "function") {
 				_options.onGeneration({
 					pool: pool,
-					generation: generation
+					generation: generation,
+					totalFitness: totalFitness,
+					backtest: this.backtest
 				});
 			}
 
@@ -153,6 +155,10 @@ define(['nodeRep'], function(nodeRep) {
 				keepers = keepers.concat(pool.splice(0, Math.floor(pool.length * _options.keepRate)));
 				window.setTimeout($.proxy(this.start, this), _options.throttle + 1000);
 			}
+		};
+
+		this.backtest = function () {
+			return this.pool[0].getFitness(_options.fitnessFunction, {});
 		};
 
 

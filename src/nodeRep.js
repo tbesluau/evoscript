@@ -11,13 +11,11 @@ define([], function() {
 		
 		this.depth = options.depth;
 		this.cached = null;
-		this.weight = 1;
-		this.lineage = 'O';
+		this.weight = null;
 
 		this.generate = function () {
 			this.children = [];
 			this.isLeaf = Math.random() < 1/(this.depth + 1);
-
 			if(this.isLeaf) {
 				this.method = options.leafFunctions[Math.floor(Math.random()*options.leafFunctions.length)]();
 			} else {
@@ -48,6 +46,7 @@ define([], function() {
 					}));
 				}
 			}
+			options.clone = null;
 		} else {
 			this.generate();
 		}
@@ -66,15 +65,43 @@ define([], function() {
 
 		this.reset = function() {
 			this.cached = null;
-			this.weight = 1;
+			this.weight = null;
+			for(var i = 0, l = this.children.length; i < l; i++) {
+				this.children[i].reset();
+			}
 		};
 
-		this.getFitness = function(fitfunc, scratch) {
-			if(!scratch && this.cached !== null) {
+		this.getFitness = function(fitfunc, isBest, scratch) {
+			if(!scratch && !isBest && this.cached !== null) {
 				return this.cached;
 			} else {
-				this.cached = fitfunc(this.evaluateFunc());
-				return this.cached;
+				var cache = fitfunc(this.evaluateFunc(), isBest);
+				if (typeof(isBest) !== 'object') {
+					this.cached = cache;
+				}
+				return cache;
+			}
+		};
+
+		this.getWeight = function() {
+			if (this.weight) {
+				return this.weight;
+			}
+			else {
+				this.weight = this.calculateWeight();
+				return this.weight;
+			}
+		};
+
+		this.calculateWeight = function () {
+			if (this.isLeaf) {
+				return 1;
+			} else {
+				var childweight = 0;
+				for(var i = 0, l = this.children.length; i < l; i++) {
+					childweight += this.children[i].calculateWeight();
+				}
+				return 1 + childweight;
 			}
 		};
 
@@ -85,19 +112,15 @@ define([], function() {
 				childrenFunctions.push(this.children[i].evaluateFunc());
 			}
 			var rep;
-			this.weight = 1;
 			if (this.isLeaf) {
 				rep = function(obj) {
-					if(obj && obj[self.method]) {
+					if(obj && obj[self.method] !== undefined) {
 						return obj[self.method];
 					} else {
 						return self.method;
 					}
 				};
 			} else {
-				for(var j = 0, k = this.children.length; j < k; j++) {
-					this.weight += this.children[j].weight;
-				}
 				rep = function(obj) {
 					var args = [];
 					for(var i = 0, l = self.children.length; i < l; i++) {
@@ -120,16 +143,16 @@ define([], function() {
 		};
 
 		this.mutate = function () {
-			this.reset();
 			var mutatingNode = this.randomNode();
 			mutatingNode.generate();
+			this.reset();
 		};
 
 		this.cross = function (other) {
-			this.reset();
 			var mutatingNode = this.randomNode();
 			var changeNode = other.randomNode().getClone();
 			mutatingNode.replaceWith(changeNode);
+			this.reset();
 		};
 
 		this.replaceWith = function (other) {
@@ -155,7 +178,7 @@ define([], function() {
 		};
 
 		this.randomNode = function () {
-			var rnum = Math.random() * this.weight;
+			var rnum = Math.random() * this.getWeight();
 			var compweight = 1;
 			if (rnum < compweight) {
 				return this;
@@ -163,12 +186,11 @@ define([], function() {
 				var child;
 				for(var i = 0, l = this.children.length; i < l; i++) {
 					child = this.children[i];
-					compweight += child.weight;
+					compweight += child.getWeight();
 					if (rnum < compweight) {
 						return child.randomNode();
 					}
 				}
-
 			}
 		};
 

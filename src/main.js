@@ -1,5 +1,6 @@
-require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFunction'], function($, evoscript, nodeFunctions, leafFunctions, fitnessFunction) {
+require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'statFunctions', 'fitnessFunction',], function($, evoscript, nodeFunctions, leafFunctions, statFunctions, fitnessFunction) {
 	var data = [];
+	var testData = [];
 	var headers = [];
 	function readFile(oncomplete) {
 		var file = $('#file-field')[0].files[0];
@@ -25,10 +26,10 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 				if(headers.length === 1) {
 					headers = headers[0];
 				}
-				/*
+				
 				var newheaders = [];
 				$.each(headers, function (index, name) {
-					$.each(es_stats, function (ind, statfunc) {
+					$.each(statFunctions, function (ind, statfunc) {
 						newheaders.push(name + '_' + statfunc.name);
 					});
 				});
@@ -40,14 +41,16 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 					processedlist = [];
 					var n = originum;
 					$.each(linelist, function (index, value) {
-						$.each(es_stats, function (ind, statfunc) {
-							processedlist.push(statfunc(value, newlist, n));
+						$.each(statFunctions, function (ind, statfunc) {
+							processedlist.push(statfunc(1 * value, newlist, n));
 							n += 1;
 						});
 					});
 					newlist.push(linelist.concat(processedlist));
 				}
-				data = newlist;*/
+				var listlength = newlist.length;
+				data = newlist.splice(0, Math.floor(listlength * 0.8));
+				testData = newlist;
 
 				// since we are using a list, make headers available as nodes
 				leafFunctions.push(
@@ -90,36 +93,49 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 					start = new Date();
 					fileLoaded = true;
 					mainHatch = new evoscript({
-						poolSize:1000,
-						throttle: 0,
+						poolSize:500,
+						throttle: 1,
+						maxDepth: 2,
 						leafFunctions: leafFunctions,
 						nodeFunctions: nodeFunctions,
 						fitnessFunction: new fitnessFunction({
 							headers: headers,
 							data: data,
+							testData: testData,
 							targetColumn: 'A'
 						}),
 						onGeneration: function(data) {
 							if(data.generation % 100 === 0) {
 								$("#infospace").html(
 									'<table><tr>' +
-										'<th>Generation</th>' +
-										'<th>Best Fitness</th>' +
-										'<th>Time Running</th>' +
-										'<th>Best Representation</th>' +
-										'</tr><tr>' +
-										'<td><div>' + data.generation + '</div></td>' +
-										'<td><div>' + data.pool[0].cached + '</div></td>' +
-										'<td><div>' + ((new Date()) - start) / 1000 + ' s</div></td>' +
-										'<td><button onclick="window.prompt(\'Best representation: \', \'' +
-										data.pool[0].representation() +'\');">See/Copy</button></td>' +
-										'</tr></table>'
+									'<th>Generation</th>' +
+									'<th>Total Fitness</th>' +
+									'<th>Time Running</th>' +
+									'<th>Best Representation</th>' +
+									'</tr><tr>' +
+									'<td><div>' + data.generation + '</div></td>' +
+									'<td><div>' + data.totalFitness + '</div></td>' +
+									'<td><div>' + ((new Date()) - start) / 1000 + ' s</div></td>' +
+									'<td><button onclick="window.prompt(\'Best representation: \', \'' +
+									data.pool[0].representation() +'\');">See/Copy</button></td>' +
+									'</tr></table>'
 								);
-								$("#workspace").html(data.pool[0].representation());
+								var headerline = '<table><tr><th>Individual</th><th>Fitness</th><th>Representation</th></tr>';
+								for (var i = 0; i < 10; i++) {
+									headerline += '<tr><td>' + (i+1) +
+										'</td><td>' + data.pool[i].cached + 
+										'</td><td style="text-align: left;">' + data.pool[i].representation() +
+										'</td></tr>';
+								}
+								headerline += '</table>';
+								headerline += '<div class="es-backtest">' +
+									data.backtest() +
+									'</div>';
+								$("#infospace").append($(headerline));
 							}
 						}
 					});
-					underdogs = new evoscript({
+					/*underdogs = new evoscript({
 						poolSize:5,
 						throttle: 1000,
 						resetRate: 5,
@@ -130,7 +146,7 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 							data: data,
 							targetColumn: 'D'
 						})
-					});
+					});*/
 
 					mainHatch.start();
 					//underdogs.start();
@@ -139,12 +155,12 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'fitnessFuncti
 			}
 		} else {
 			mainHatch.pause();
-			underdogs.pause();
+			//underdogs.pause();
 		}
 	});
 
 	$("#evoscript-stop").click(function() {
 		mainHatch.stop();
-		underdogs.stop();
+		//underdogs.stop();
 	});
 });

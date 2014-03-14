@@ -117,6 +117,17 @@ define([], function() {
 					if(obj && obj[self.method] !== undefined) {
 						return obj[self.method];
 					} else {
+						if (typeof(self.method) === 'string') {
+							var leafs;
+							if (self.method.indexOf('*-*') !== -1) {
+								leafs = self.method.split('*-*');
+								return obj[leafs[0]] - obj[leafs[1]];
+							}
+							if (self.method.indexOf('*/*') !== -1) {
+								leafs = self.method.split('*/*');
+								return obj[leafs[0]] - obj[leafs[1]];
+							}
+						}
 						return self.method;
 					}
 				};

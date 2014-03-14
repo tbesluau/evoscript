@@ -1,112 +1,166 @@
-// making sure stuff loads
-$('#workspace').html('evoscript loaded');
-$('#infospace').html(
-	'Press "Start" to get started, after defining your representation functions and fitness functions in functions.js'
-);
-// hatchery is our main hatchery
-var hatchery = new Hatchery();
-// underdogs is our secondary hatchery
-// that gets reset every so often and its
-// top dogs can get transfered into the main hatch
-var underdogs = new Hatchery();
-
-underdogs.resetRate = 200;
-underdogs.pushTo = hatchery;
-underdogs.infospace = '#infospace-underdog';
-underdogs.drawBest = false;
-
-// basic buttons wiring
-$('#evoscript-trigger').click(function () {
-	if(!hatchery.running) {
-		readFile([hatchery, underdogs]);
-		startSystem([hatchery, underdogs]);
-	} else {
-		hatchery.pause();
-		underdogs.pause();
-	}
-});
-$('#evoscript-stop').click(function () {
-	hatchery.stop();
-	underdogs.stop();
-});
-
-function startSystem (hatches) {
-	if(waitforfile) {
-		setTimeout(function () {
-			startSystem(hatches);
-		}, 50);
-	} else {
-		$.each(hatches, function(index, hatch) {
-			hatch.start();
-		});
-	}
-}
-
-// handling file uploads for list based fitness functions
-function readFile(hatches) {
-	var file = $('#file-field')[0].files[0];
-	if (file) {
-		$.each(hatches, function(index, hatch) {
-			hatch.useList = true;
-		});
-		//global on purpose
-		waitforfile = true;
-		var reader = new FileReader();
-		// global on purpose
-		es_list = [];
-		reader.readAsText(file, "UTF-8");
-		reader.onload = function (evt) {
-			var linesplit;
-			$.each(evt.target.result.split(/\r\n|\r|\n/g), function (index, line) {
-				if (line.replace(',', '').replace(' ', '')) {
-					linesplit = line.split(',');
-					for (var i = 0; i < linesplit.length; i++) {
-						if (!isNaN(linesplit[i])) {
-							linesplit[i] = linesplit[i] * 1;
-						}
-					}
-					es_list.push(linesplit);
-				}
-			});
+require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'statFunctions', 'fitnessFunction',], function($, evoscript, nodeFunctions, leafFunctions, statFunctions, fitnessFunction) {
+	var data = [];
+	var testData = [];
+	var headers = [];
+	function readFile(oncomplete) {
+		var file = $('#file-field')[0].files[0];
+		if (file) {
+			var reader = new FileReader();
 			// global on purpose
-			es_headers = es_list.splice(0, 1);
-			if(es_headers.length === 1) {
-				es_headers = es_headers[0];
-			}
-			var newheaders = [];
-			$.each(es_headers, function (index, name) {
-				$.each(es_stats, function (ind, statfunc) {
-					newheaders.push(name + '_' + statfunc.name);
+			reader.readAsText(file, "UTF-8");
+			reader.onload = function (evt) {
+				var linesplit;
+				$.each(evt.target.result.split(/\r\n|\r|\n/g), function (index, line) {
+					if (line.replace(',', '').replace(' ', '')) {
+						linesplit = line.split(',');
+						for (var i = 0; i < linesplit.length; i++) {
+							if (!isNaN(linesplit[i])) {
+								linesplit[i] = linesplit[i] * 1;
+							}
+						}
+						data.push(linesplit);
+					}
 				});
-			});
-			var originum = es_headers.length;
-			es_headers = es_headers.concat(newheaders);
-			var newlist = [];
-			for (var i = 0; i < es_list.length; i++) {
-				var linelist = es_list[i];
-				processedlist = [];
-				var n = originum;
-				$.each(linelist, function (index, value) {
-					$.each(es_stats, function (ind, statfunc) {
-						processedlist.push(statfunc(value, newlist, n));
-						n += 1;
+				// global on purpose
+				headers = data.splice(0, 1);
+				if(headers.length === 1) {
+					headers = headers[0];
+				}
+				
+				var newheaders = [];
+				$.each(headers, function (index, name) {
+					$.each(statFunctions, function (ind, statfunc) {
+						newheaders.push(name + '_' + statfunc.name);
 					});
 				});
-				newlist.push(linelist.concat(processedlist));
-			}
-			es_list = newlist;
-			waitforfile = false;
-			// since we are using a list, make headers available as nodes
-			es_leafFunctions.push(
-				function es_header () {
-					return es_headers[Math.floor(Math.random()*es_headers.length)];
+				var originum = headers.length;
+				headers = headers.concat(newheaders);
+				var newlist = [];
+				for (var i = 0; i < data.length; i++) {
+					var linelist = data[i];
+					processedlist = [];
+					var n = originum;
+					$.each(linelist, function (index, value) {
+						$.each(statFunctions, function (ind, statfunc) {
+							processedlist.push(statfunc(1 * value, newlist, n));
+							n += 1;
+						});
+					});
+					newlist.push(linelist.concat(processedlist));
 				}
-			);
-		};
-		reader.onerror = function (evt) {
-			$('#infospace').html('Error reading CSV file');
-		};
-	} else {
-		waitforfile = false;
+				var listlength = newlist.length;
+				data = newlist.splice(0, Math.floor(listlength * 0.8));
+				testData = newlist;
+
+				// since we are using a list, make headers available as nodes
+				leafFunctions.push(
+					function es_header () {
+						return headers[Math.floor(Math.random()*headers.length)];
+					}
+				);
+				if(oncomplete) {
+					oncomplete();
+				}
+			};
+			reader.onerror = function (evt) {
+				$('#infospace').html('Error reading CSV file');
+			};
+		} else {
+			if(oncomplete) {
+				oncomplete();
+			}
+		}
 	}
-}
+
+
+
+	var mainHatch, underdogs, fileLoaded, start;
+
+
+	/**
+	 * TODO: Implement Event queue for things like 'reset', 'generationComplete' or whatever else.
+	 *  That would trigger the transfer of underdogs as well as screen drawing.
+	 */
+
+	$('#evoscript-trigger').click(function () {
+		if(!mainHatch || !mainHatch.isRunning()) {
+			if(fileLoaded) {
+				mainHatch.start();
+				//underdogs.start();
+			} else {
+
+				readFile(function() {
+					start = new Date();
+					fileLoaded = true;
+					mainHatch = new evoscript({
+						poolSize:500,
+						throttle: 1,
+						maxDepth: 2,
+						leafFunctions: leafFunctions,
+						nodeFunctions: nodeFunctions,
+						fitnessFunction: new fitnessFunction({
+							headers: headers,
+							data: data,
+							testData: testData,
+							targetColumn: 'A'
+						}),
+						onGeneration: function(data) {
+							if(data.generation % 100 === 0) {
+								$("#infospace").html(
+									'<table><tr>' +
+									'<th>Generation</th>' +
+									'<th>Total Fitness</th>' +
+									'<th>Time Running</th>' +
+									'<th>Best Representation</th>' +
+									'</tr><tr>' +
+									'<td><div>' + data.generation + '</div></td>' +
+									'<td><div>' + data.totalFitness + '</div></td>' +
+									'<td><div>' + ((new Date()) - start) / 1000 + ' s</div></td>' +
+									'<td><button onclick="window.prompt(\'Best representation: \', \'' +
+									data.pool[0].representation() +'\');">See/Copy</button></td>' +
+									'</tr></table>'
+								);
+								var headerline = '<table><tr><th>Individual</th><th>Fitness</th><th>Representation</th></tr>';
+								for (var i = 0; i < 10; i++) {
+									headerline += '<tr><td>' + (i+1) +
+										'</td><td>' + data.pool[i].cached + 
+										'</td><td style="text-align: left;">' + data.pool[i].representation() +
+										'</td></tr>';
+								}
+								headerline += '</table>';
+								headerline += '<div class="es-backtest">' +
+									data.backtest() +
+									'</div>';
+								$("#infospace").append($(headerline));
+							}
+						}
+					});
+					/*underdogs = new evoscript({
+						poolSize:5,
+						throttle: 1000,
+						resetRate: 5,
+						leafFunctions: leafFunctions,
+						nodeFunctions: nodeFunctions,
+						fitnessFunction: new fitnessFunction({
+							headers: headers,
+							data: data,
+							targetColumn: 'D'
+						})
+					});*/
+
+					mainHatch.start();
+					//underdogs.start();
+				});
+
+			}
+		} else {
+			mainHatch.pause();
+			//underdogs.pause();
+		}
+	});
+
+	$("#evoscript-stop").click(function() {
+		mainHatch.stop();
+		//underdogs.stop();
+	});
+});

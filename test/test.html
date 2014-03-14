@@ -1,0 +1,27 @@
+<html>
+<head>
+	<title>evoscript</title>
+	<link rel="stylesheet" type="text/css" href="../src/style/style.css" />
+	<script src="../lib/require.js"></script>
+	<script>
+		(function () {
+			require.config({
+				paths: {
+					jquery: '../lib/jquery',
+					evoscript: '../src/evoscript',
+					nodeRep: '../src/nodeRep',
+					leafFunctions: '../src/leafFunctions',
+					nodeFunctions: '../src/nodeFunctions',
+					fitnessFunction: '../src/fitnessFunction'
+				}
+			});
+		})();
+	</script>
+	<script src="../src/main.js"></script>
+	<script src="test.js"></script>
+</head>
+<body>
+	<div id="testspace">
+	</div>
+	</body>
+</html>

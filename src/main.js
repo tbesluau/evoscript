@@ -30,7 +30,7 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'statFunctions
 				var newheaders = [];
 				$.each(headers, function (index, name) {
 					$.each(statFunctions, function (ind, statfunc) {
-						newheaders.push(name + '_' + statfunc.name);
+						newheaders.push(statfunc.name + '_' + name);
 					});
 				});
 				var originum = headers.length;
@@ -52,12 +52,6 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'statFunctions
 				data = newlist.splice(0, Math.floor(listlength * 0.8));
 				testData = newlist;
 
-				// since we are using a list, make headers available as nodes
-				leafFunctions.push(
-					function es_header () {
-						return headers[Math.floor(Math.random()*headers.length)];
-					}
-				);
 				if(oncomplete) {
 					oncomplete();
 				}
@@ -96,13 +90,13 @@ require(['jquery', 'evoscript', 'nodeFunctions', 'leafFunctions', 'statFunctions
 						poolSize:500,
 						throttle: 1,
 						maxDepth: 2,
-						leafFunctions: leafFunctions,
+						leafFunctions: leafFunctions(headers),
 						nodeFunctions: nodeFunctions,
 						fitnessFunction: new fitnessFunction({
 							headers: headers,
 							data: data,
 							testData: testData,
-							targetColumn: 'A'
+							targetColumn: '_A'
 						}),
 						onGeneration: function(data) {
 							if(data.generation % 100 === 0) {

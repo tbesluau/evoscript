@@ -2,7 +2,7 @@ define(function() {
 	window.es_store = {};
 	return [
 
-		function es_EMA_10 (val, list, n) {
+		function _es_EMA_10 (val, list, n) {
 			var alpha = 2/(21);
 			if (list.length) {
 				return alpha * val + (1 - alpha) * list[list.length - 1][n];
@@ -11,7 +11,7 @@ define(function() {
 			}
 		},
 	
-		function es_EMA_20 (val, list, n) {
+		function _es_EMA_20 (val, list, n) {
 			var alpha = 2/(41);
 			if (list.length) {
 				return alpha * val + (1 - alpha) * list[list.length - 1][n];
@@ -20,7 +20,7 @@ define(function() {
 			}
 		},
 	
-		function es_EMA_50 (val, list, n) {
+		function _es_EMA_50 (val, list, n) {
 			var alpha = 2/(101);
 			if (list.length) {
 				return alpha * val + (1 - alpha) * list[list.length - 1][n];
@@ -51,7 +51,7 @@ define(function() {
 			}
 		},
 	
-		/*function es_3_diff (val, list, n) {
+		function es_3_diff (val, list, n) {
 			if (list.length > 3) {
 				return val * 1 - list[list.length - 3][n];
 			} else {
@@ -65,7 +65,6 @@ define(function() {
 			} else {
 				return 0;
 			}
-		}*/
-
+		},
 	];
 });
